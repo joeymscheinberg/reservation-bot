@@ -85,15 +85,16 @@ def api_search():
     except (TypeError, ValueError):
         party_size = 2
 
-    # Search venues
-    hits = _search_resy_venues(query)
+    # Search venues (pass neighborhood so it's included in the Resy query)
+    hits = _search_resy_venues(query, neighborhood)
     if not hits:
         return jsonify({"results": [], "meta": {"query": query, "neighborhood": neighborhood}})
 
-    # Neighborhood filter
-    if neighborhood:
+    # Post-filter by neighborhood if we have enough results to filter safely
+    if neighborhood and len(hits) >= 5:
         filtered = [h for h in hits if neighborhood.lower() in (h.get("neighborhood") or "").lower()]
-        hits = filtered if filtered else hits
+        if filtered:
+            hits = filtered
 
     # Check availability (up to 5 results, check up to 15 venues)
     results = []

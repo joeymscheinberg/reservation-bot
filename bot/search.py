@@ -390,22 +390,38 @@ def _resolve_date(day_choice: str) -> Optional[datetime]:
     return None
 
 
-def _search_resy_venues(query: str) -> list[dict]:
-    """Search Resy venue search API and return hits sorted by rating."""
+def _search_resy_venues(query: str, neighborhood: str = None) -> list[dict]:
+    """Search Resy venue search API and return hits sorted by rating.
+
+    Searches cuisine+neighborhood together first for precision.
+    Falls back to cuisine-only if that returns nothing.
+    """
     session = _build_resy_session()
-    try:
-        response = session.post(
-            "https://api.resy.com/3/venuesearch/search",
-            json={"query": query, "geo": {"latitude": 40.7589, "longitude": -73.9851}},
-            timeout=15,
-        )
-        response.raise_for_status()
-        hits = response.json().get("search", {}).get("hits", [])
-        hits.sort(key=lambda h: h.get("rating", {}).get("average", 0), reverse=True)
-        return hits
-    except requests.RequestException as e:
-        logger.error(f"Venue search error: {e}")
-        return []
+
+    def _do_search(q):
+        try:
+            response = session.post(
+                "https://api.resy.com/3/venuesearch/search",
+                json={"query": q, "geo": {"latitude": 40.7589, "longitude": -73.9851}},
+                timeout=15,
+            )
+            response.raise_for_status()
+            hits = response.json().get("search", {}).get("hits", [])
+            hits.sort(key=lambda h: h.get("rating", {}).get("average", 0), reverse=True)
+            return hits
+        except requests.RequestException as e:
+            logger.error(f"Venue search error: {e}")
+            return []
+
+    # Try with neighborhood in query first
+    if neighborhood:
+        combined_query = f"{query} {neighborhood}"
+        hits = _do_search(combined_query)
+        if hits:
+            return hits
+
+    # Fall back to cuisine-only
+    return _do_search(query)
 
 
 def _check_availability(slug: str, date: datetime, party_size: int, start_time: str, end_time: str) -> list[dict]:
