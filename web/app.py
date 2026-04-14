@@ -34,8 +34,8 @@ if 'api_key="' in RESY_API_KEY:
     RESY_API_KEY = RESY_API_KEY.split('api_key="')[1].rstrip('"')
 
 
-def resy_login(email: str, password: str) -> dict | None:
-    """Authenticate with Resy and return token info."""
+def resy_login(email: str, password: str) -> dict:
+    """Authenticate with Resy. Returns dict with 'token' on success or 'error' on failure."""
     try:
         response = requests.post(
             "https://api.resy.com/3/auth/password",
@@ -45,18 +45,38 @@ def resy_login(email: str, password: str) -> dict | None:
                 "Origin": "https://resy.com",
                 "Referer": "https://resy.com/",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "X-Resy-Universal-Auth": "",
             },
             data={"email": email, "password": password},
             timeout=10,
         )
+        data = response.json()
+
         if response.status_code == 200:
-            data = response.json()
-            token = data.get("token") or data.get("auth_token")
+            # Resy returns token at top level
+            token = (
+                data.get("token")
+                or data.get("auth_token")
+                or data.get("em_token")
+            )
             if token:
                 return {"token": token, "email": email}
-        return None
-    except Exception:
-        return None
+            # Shouldn't happen, but surface it
+            return {"error": f"Login succeeded but no token found in response: {list(data.keys())}"}
+
+        # 419 = bad credentials, 429 = rate limited
+        if response.status_code == 419:
+            return {"error": "Wrong email or password — double-check your Resy login details."}
+        if response.status_code == 429:
+            return {"error": "Too many login attempts — wait a minute and try again."}
+
+        msg = data.get("message") or f"Resy returned status {response.status_code}"
+        return {"error": msg}
+
+    except requests.exceptions.Timeout:
+        return {"error": "Resy took too long to respond — try again."}
+    except Exception as e:
+        return {"error": f"Login error: {str(e)}"}
 
 
 def get_resy_client() -> ResyClient | None:
@@ -88,8 +108,8 @@ def login():
         return render_template("login.html", error="Please enter your email and password.")
 
     result = resy_login(email, password)
-    if not result:
-        return render_template("login.html", error="Couldn't log in — check your Resy email and password.")
+    if "error" in result:
+        return render_template("login.html", error=result["error"])
 
     session["resy_token"] = result["token"]
     session["resy_email"] = result["email"]
