@@ -21,12 +21,6 @@
         <span class="logo-mark">&#127860;</span>
         <span class="logo-text">TableFinder</span>
       </a>
-      {% if session.get('resy_email') %}
-      <nav class="header-nav">
-        <span class="user-pill">{{ session['resy_email'] }}</span>
-        <a href="{{ url_for('logout') }}" class="btn-ghost">Sign out</a>
-      </nav>
-      {% endif %}
     </div>
   </header>
 

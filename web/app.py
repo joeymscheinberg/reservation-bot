@@ -1,18 +1,15 @@
 """
-Flask web app for reservation search.
+Flask web app for TableFinder — no login required.
+Uses a shared RESY_AUTH_TOKEN from environment (valid until May 26, 2026).
 """
 
 import os
 import sys
-import json
 import time
 import requests
 from datetime import datetime
 from pathlib import Path
-from flask import (
-    Flask, render_template, request, session,
-    redirect, url_for, jsonify
-)
+from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
 # Add project root to path so we can import bot modules
@@ -22,169 +19,52 @@ load_dotenv(ROOT / ".env")
 
 from bot.search import (
     _parse_description, _search_resy_venues,
-    _check_availability, _resolve_date, TIME_WINDOWS, DAY_OPTIONS
+    _check_availability, _resolve_date, TIME_WINDOWS,
 )
 from bot.resy import ResyClient
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(24).hex())
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "tablefinder-2026")
 
+# Parse API key (handles both raw key and full "ResyAPI api_key=..." format)
 RESY_API_KEY = os.getenv("RESY_API_KEY", "")
 if 'api_key="' in RESY_API_KEY:
     RESY_API_KEY = RESY_API_KEY.split('api_key="')[1].rstrip('"')
 
+RESY_AUTH_TOKEN = os.getenv("RESY_AUTH_TOKEN", "")
 
-def resy_login(email: str, password: str) -> dict:
-    """Authenticate with Resy. Returns dict with 'token' on success or 'error' on failure."""
-    try:
-        response = requests.post(
-            "https://api.resy.com/3/auth/password",
-            headers={
-                "Authorization": f'ResyAPI api_key="{RESY_API_KEY}"',
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Origin": "https://resy.com",
-                "Referer": "https://resy.com/",
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                "X-Resy-Universal-Auth": "",
-            },
-            data={"email": email, "password": password},
-            timeout=10,
-        )
-        data = response.json()
-
-        if response.status_code == 200:
-            # Resy returns token at top level
-            token = (
-                data.get("token")
-                or data.get("auth_token")
-                or data.get("em_token")
-            )
-            if token:
-                return {"token": token, "email": email}
-            # Shouldn't happen, but surface it
-            return {"error": f"Login succeeded but no token found in response: {list(data.keys())}"}
-
-        # 419 = bad credentials, 429 = rate limited
-        if response.status_code == 419:
-            return {"error": "Wrong email or password — double-check your Resy login details."}
-        if response.status_code == 429:
-            return {"error": "Too many login attempts — wait a minute and try again."}
-
-        msg = data.get("message") or f"Resy returned status {response.status_code}"
-        return {"error": msg}
-
-    except requests.exceptions.Timeout:
-        return {"error": "Resy took too long to respond — try again."}
-    except Exception as e:
-        return {"error": f"Login error: {str(e)}"}
-
-
-def get_resy_client() -> ResyClient | None:
-    """Build a ResyClient using the logged-in user's token."""
-    token = session.get("resy_token")
-    if not token:
-        return None
-    # Temporarily override env vars for this request
-    os.environ["RESY_AUTH_TOKEN"] = token
-    try:
-        return ResyClient()
-    except Exception:
-        return None
+# Inject token so bot modules pick it up
+if RESY_AUTH_TOKEN:
+    os.environ["RESY_AUTH_TOKEN"] = RESY_AUTH_TOKEN
 
 
 @app.route("/")
 def index():
-    if session.get("resy_token"):
-        return redirect(url_for("search"))
-    return render_template("login.html")
-
-
-@app.route("/login", methods=["POST"])
-def login():
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "").strip()
-
-    if not email or not password:
-        return render_template("login.html", error="Please enter your email and password.")
-
-    result = resy_login(email, password)
-    if "error" in result:
-        return render_template("login.html", error=result["error"])
-
-    session["resy_token"] = result["token"]
-    session["resy_email"] = result["email"]
-    return redirect(url_for("search"))
-
-
-@app.route("/login-server", methods=["POST"])
-def login_server():
-    """Fallback: server-side Resy auth (used if browser CORS blocks direct call)."""
-    data = request.get_json()
-    email = (data.get("email") or "").strip()
-    password = (data.get("password") or "").strip()
-    if not email or not password:
-        return jsonify({"error": "Missing credentials"}), 400
-    result = resy_login(email, password)
-    if "error" in result:
-        return jsonify({"error": result["error"]}), 401
-    session["resy_token"] = result["token"]
-    session["resy_email"] = result["email"]
-    return jsonify({"ok": True})
-
-
-@app.route("/api/login", methods=["POST"])
-def api_login():
-    """Browser-side auth endpoint — receives token obtained directly from Resy by the browser."""
-    data = request.get_json()
-    token = (data.get("token") or "").strip()
-    email = (data.get("email") or "").strip()
-
-    if not token:
-        return jsonify({"error": "No token provided"}), 400
-
-    session["resy_token"] = token
-    session["resy_email"] = email
-    return jsonify({"ok": True})
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("index"))
-
-
-@app.route("/search")
-def search():
-    if not session.get("resy_token"):
-        return redirect(url_for("index"))
-    return render_template("search.html", email=session.get("resy_email", ""))
+    return render_template("search.html")
 
 
 @app.route("/api/search", methods=["POST"])
 def api_search():
-    if not session.get("resy_token"):
-        return jsonify({"error": "Not logged in"}), 401
+    if not RESY_AUTH_TOKEN:
+        return jsonify({"error": "Server not configured — RESY_AUTH_TOKEN missing."}), 500
 
     data = request.get_json()
-    description = data.get("description", "").strip()
+    description = (data.get("description") or "").strip()
     if not description:
         return jsonify({"error": "No description provided"}), 400
 
-    # Parse description with Claude
+    # Parse with Claude
     parsed = _parse_description(description)
-    query = parsed.get("query") or description
+    query        = parsed.get("query") or description
     neighborhood = parsed.get("neighborhood")
 
-    # Resolve time window
+    # Time window
     time_key = data.get("time_window") or parsed.get("time_window")
-    if time_key and time_key in TIME_WINDOWS:
-        start_time, end_time, time_label = TIME_WINDOWS[time_key]
-    else:
-        start_time, end_time, time_label = TIME_WINDOWS["4"]  # default: dinner
+    start_time, end_time, time_label = TIME_WINDOWS.get(time_key, TIME_WINDOWS["4"])
 
-    # Resolve date
+    # Date
     date_str = data.get("date")
-    day = data.get("day") or parsed.get("day")
+    day      = data.get("day") or parsed.get("day")
     if date_str:
         try:
             target_date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -196,7 +76,7 @@ def api_search():
         target_date = None
 
     if not target_date:
-        return jsonify({"error": "Could not determine date. Try including a day like 'Friday' or 'this Thursday'."}), 400
+        return jsonify({"error": "Couldn't figure out the date — try adding a day like 'Friday' or 'this Saturday'."}), 400
 
     # Party size
     party_size = data.get("party_size") or parsed.get("party_size") or 2
@@ -206,18 +86,16 @@ def api_search():
         party_size = 2
 
     # Search venues
-    os.environ["RESY_AUTH_TOKEN"] = session["resy_token"]
     hits = _search_resy_venues(query)
-
     if not hits:
         return jsonify({"results": [], "meta": {"query": query, "neighborhood": neighborhood}})
 
-    # Filter by neighborhood
+    # Neighborhood filter
     if neighborhood:
         filtered = [h for h in hits if neighborhood.lower() in (h.get("neighborhood") or "").lower()]
         hits = filtered if filtered else hits
 
-    # Check availability
+    # Check availability (up to 5 results, check up to 15 venues)
     results = []
     checked = 0
     for hit in hits:
@@ -234,19 +112,19 @@ def api_search():
         if slots:
             rating = hit.get("rating", {})
             results.append({
-                "name": hit.get("name", slug),
-                "slug": slug,
-                "rating": round(rating.get("average", 0), 2) if rating.get("average") else None,
+                "name":         hit.get("name", slug),
+                "slug":         slug,
+                "rating":       round(rating.get("average", 0), 2) if rating.get("average") else None,
                 "review_count": rating.get("count", 0),
-                "cuisine": ", ".join(hit.get("cuisine", [])),
-                "price": "$" * (hit.get("price_range_id") or 2),
+                "cuisine":      ", ".join(hit.get("cuisine", [])),
+                "price":        "$" * (hit.get("price_range_id") or 2),
                 "neighborhood": hit.get("neighborhood", ""),
                 "slots": [
                     {
-                        "time": s["time"],
-                        "type": s.get("type", "").strip(),
+                        "time":         s["time"],
+                        "type":         s.get("type", "").strip(),
                         "config_token": s.get("config_token", ""),
-                        "date": s.get("date", ""),
+                        "date":         s.get("date", ""),
                     }
                     for s in slots[:4]
                 ],
@@ -255,48 +133,40 @@ def api_search():
     return jsonify({
         "results": results,
         "meta": {
-            "query": query,
+            "query":        query,
             "neighborhood": neighborhood,
-            "date": target_date.strftime("%A, %B %-d"),
-            "time_label": time_label,
-            "party_size": party_size,
-        }
+            "date":         target_date.strftime("%A, %B %-d"),
+            "time_label":   time_label,
+            "party_size":   party_size,
+        },
     })
 
 
 @app.route("/api/book", methods=["POST"])
 def api_book():
-    if not session.get("resy_token"):
-        return jsonify({"error": "Not logged in"}), 401
+    if not RESY_AUTH_TOKEN:
+        return jsonify({"error": "Server not configured"}), 500
 
-    data = request.get_json()
-    slug = data.get("slug")
-    date_str = data.get("date")
-    time_str = data.get("time")
+    data       = request.get_json()
+    slug       = data.get("slug")
+    date_str   = data.get("date")
+    time_str   = data.get("time")
     party_size = int(data.get("party_size", 2))
 
     if not all([slug, date_str, time_str]):
         return jsonify({"error": "Missing booking details"}), 400
 
     try:
-        os.environ["RESY_AUTH_TOKEN"] = session["resy_token"]
-        client = ResyClient()
+        client      = ResyClient()
         target_date = datetime.strptime(date_str, "%Y-%m-%d")
-
-        result = client.attempt_booking(
-            slug=slug,
-            date=target_date,
-            party_size=party_size,
-            start_time=time_str,
-            end_time=time_str,
-            dry_run=False,
+        result      = client.attempt_booking(
+            slug=slug, date=target_date, party_size=party_size,
+            start_time=time_str, end_time=time_str, dry_run=False,
         )
-
         if result:
-            return jsonify({"success": True, "venue": result["venue"], "time": result["time"], "date": result["date"]})
-        else:
-            return jsonify({"error": "Booking failed — that slot may have just been taken."}), 409
-
+            return jsonify({"success": True, "venue": result["venue"],
+                            "time": result["time"], "date": result["date"]})
+        return jsonify({"error": "Booking failed — slot may have just been taken."}), 409
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
