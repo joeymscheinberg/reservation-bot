@@ -116,6 +116,37 @@ def login():
     return redirect(url_for("search"))
 
 
+@app.route("/login-server", methods=["POST"])
+def login_server():
+    """Fallback: server-side Resy auth (used if browser CORS blocks direct call)."""
+    data = request.get_json()
+    email = (data.get("email") or "").strip()
+    password = (data.get("password") or "").strip()
+    if not email or not password:
+        return jsonify({"error": "Missing credentials"}), 400
+    result = resy_login(email, password)
+    if "error" in result:
+        return jsonify({"error": result["error"]}), 401
+    session["resy_token"] = result["token"]
+    session["resy_email"] = result["email"]
+    return jsonify({"ok": True})
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    """Browser-side auth endpoint — receives token obtained directly from Resy by the browser."""
+    data = request.get_json()
+    token = (data.get("token") or "").strip()
+    email = (data.get("email") or "").strip()
+
+    if not token:
+        return jsonify({"error": "No token provided"}), 400
+
+    session["resy_token"] = token
+    session["resy_email"] = email
+    return jsonify({"ok": True})
+
+
 @app.route("/logout")
 def logout():
     session.clear()

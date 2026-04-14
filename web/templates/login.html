@@ -10,13 +10,9 @@
       <p class="subhead">Sign in with your Resy account to search real-time availability.</p>
     </div>
 
-    {% if error %}
-    <div class="alert alert-error">
-      <span class="alert-icon">&#9888;</span> {{ error }}
-    </div>
-    {% endif %}
+    <div id="login-error" class="alert alert-error" style="display:none; margin-bottom:16px;"></div>
 
-    <form method="POST" action="{{ url_for('login') }}" class="login-form">
+    <form id="login-form" class="login-form" onsubmit="doLogin(event)">
       <div class="field-group">
         <label for="email">Resy email</label>
         <input
@@ -41,8 +37,9 @@
         />
       </div>
 
-      <button type="submit" class="btn-primary btn-full">
-        Sign in &rarr;
+      <button type="submit" id="login-btn" class="btn-primary btn-full">
+        <span id="login-btn-text">Sign in &rarr;</span>
+        <span id="login-spinner" class="spinner hidden"></span>
       </button>
     </form>
 
@@ -66,4 +63,94 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const RESY_API_KEY = "VbWk7s3L4KiK5fzlO7JD3Q5EYolJI7n5";
+
+async function doLogin(e) {
+  e.preventDefault();
+  const email    = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const errEl    = document.getElementById("login-error");
+  const btn      = document.getElementById("login-btn");
+  const btnText  = document.getElementById("login-btn-text");
+  const spinner  = document.getElementById("login-spinner");
+
+  errEl.style.display = "none";
+  btn.disabled = true;
+  btnText.classList.add("hidden");
+  spinner.classList.remove("hidden");
+
+  try {
+    // Call Resy directly from the browser — avoids cloud server IP blocking
+    const resyRes = await fetch("https://api.resy.com/3/auth/password", {
+      method: "POST",
+      headers: {
+        "Authorization": `ResyAPI api_key="${RESY_API_KEY}"`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "https://resy.com",
+        "Referer": "https://resy.com/",
+      },
+      body: new URLSearchParams({ email, password }).toString(),
+    });
+
+    const data = await resyRes.json().catch(() => ({}));
+
+    if (resyRes.status === 419 || !resyRes.ok) {
+      showError(data.message || "Wrong email or password — double-check your Resy login.");
+      return;
+    }
+
+    const token = data.token || data.auth_token || data.em_token;
+    if (!token) {
+      showError("Resy didn't return a login token. Try again.");
+      return;
+    }
+
+    // Store token in our server session
+    const sessionRes = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, email }),
+    });
+
+    if (sessionRes.ok) {
+      window.location.href = "/search";
+    } else {
+      showError("Session error — please try again.");
+    }
+
+  } catch (err) {
+    // CORS fallback: if browser blocks the direct call, fall back to server-side
+    console.warn("Direct Resy call failed, trying server-side:", err.message);
+    try {
+      const fallback = await fetch("/login-server", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const fd = await fallback.json();
+      if (fd.ok) {
+        window.location.href = "/search";
+      } else {
+        showError(fd.error || "Login failed — please try again.");
+      }
+    } catch (e2) {
+      showError("Network error — please check your connection and try again.");
+    }
+  } finally {
+    btn.disabled = false;
+    btnText.classList.remove("hidden");
+    spinner.classList.add("hidden");
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById("login-error");
+  el.innerHTML = `<span class="alert-icon">⚠</span> ${msg}`;
+  el.style.display = "flex";
+}
+</script>
 {% endblock %}
