@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(curl:*)",
+      "Bash(plutil:*)",
+      "Bash(cp /Users/joeyscheinberg/reservation-bot/com.joey.reservationbot.plist ~/Library/LaunchAgents/)",
+      "Bash(launchctl load:*)",
+      "Bash(launchctl list:*)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -c ':*)",
+      "Bash(osascript -e 'tell application \"System Events\" to get the name of every process whose background only is false')",
+      "Bash(brew install:*)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -m bot.notify)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -m bot.main --status)",
+      "Bash(xxd)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

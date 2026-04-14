@@ -1,0 +1,16 @@
+{
+  "venue": "The Golden Swan",
+  "date": "2026-05-02",
+  "time": "11:00",
+  "dry_run": true,
+  "platform": "resy",
+  "slug": "the-golden-swan",
+  "party_size": 2,
+  "start_time": "11:00",
+  "end_time": "13:00",
+  "slot_type": "saturday_brunch",
+  "pending_since": "2026-04-12T17:37:25.392547",
+  "status": "cancelled",
+  "weekend_id": "2026-05-02",
+  "cancelled_at": "2026-04-12T17:52:13.758220"
+}

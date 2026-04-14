@@ -1,0 +1,15 @@
+{
+  "venue": "The Commerce Inn",
+  "date": "2026-04-24",
+  "time": "21:30",
+  "dry_run": true,
+  "platform": "resy",
+  "slug": "the-commerce-inn",
+  "party_size": 2,
+  "start_time": "19:00",
+  "end_time": "22:00",
+  "slot_type": "friday_dinner",
+  "pending_since": "2026-04-12T17:37:25.401172",
+  "status": "optional",
+  "weekend_id": "2026-04-25"
+}

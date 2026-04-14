@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}TableFinder{% endblock %}</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="{{ url_for('index') }}" class="logo">
+        <span class="logo-mark">&#127860;</span>
+        <span class="logo-text">TableFinder</span>
+      </a>
+      {% if session.get('resy_email') %}
+      <nav class="header-nav">
+        <span class="user-pill">{{ session['resy_email'] }}</span>
+        <a href="{{ url_for('logout') }}" class="btn-ghost">Sign out</a>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p>Powered by Resy &nbsp;·&nbsp; Built for friends</p>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

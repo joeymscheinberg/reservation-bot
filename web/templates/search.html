@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Search — TableFinder{% endblock %}
+
+{% block content %}
+<div class="search-page">
+
+  <!-- Hero / Search bar -->
+  <section class="search-hero">
+    <h1 class="hero-title">What are you in the mood for?</h1>
+    <p class="hero-sub">Describe the vibe, cuisine, neighborhood — anything. We'll handle the rest.</p>
+
+    <div class="search-box-wrap">
+      <div class="search-input-row">
+        <textarea
+          id="description"
+          class="search-textarea"
+          placeholder="e.g. cozy Italian in the West Village this Friday dinner for 2"
+          rows="2"
+          autofocus
+        ></textarea>
+        <button id="search-btn" class="btn-search" onclick="runSearch()">
+          <span id="search-btn-text">Search</span>
+          <span id="search-spinner" class="spinner hidden"></span>
+        </button>
+      </div>
+      <p class="search-hint">Include day, time, party size and neighborhood for the best results — or leave it vague, we'll ask Resy anyway.</p>
+    </div>
+  </section>
+
+  <!-- Error banner -->
+  <div id="error-banner" class="alert alert-error hidden"></div>
+
+  <!-- Meta bar (shown after search) -->
+  <div id="meta-bar" class="meta-bar hidden">
+    <span id="meta-text"></span>
+  </div>
+
+  <!-- Results grid -->
+  <section id="results-section" class="results-section hidden">
+    <div id="results-grid" class="results-grid"></div>
+  </section>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="empty-state hidden">
+    <div class="empty-icon">&#128269;</div>
+    <h3>No tables found</h3>
+    <p>Try adjusting the date, time window, or neighborhood.</p>
+  </div>
+
+</div>
+
+<!-- Booking Modal -->
+<div id="booking-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModalDirect()">&times;</button>
+    <h2 id="modal-venue-name" class="modal-title"></h2>
+    <p id="modal-meta" class="modal-meta"></p>
+
+    <div id="modal-slots" class="modal-slots"></div>
+
+    <div id="modal-confirm" class="modal-confirm hidden">
+      <div class="confirm-box">
+        <p class="confirm-label">Confirm reservation</p>
+        <p id="confirm-details" class="confirm-details"></p>
+        <div class="confirm-actions">
+          <button class="btn-secondary" onclick="cancelConfirm()">Back</button>
+          <button class="btn-primary" id="confirm-book-btn" onclick="confirmBook()">
+            <span id="confirm-btn-text">Book it</span>
+            <span id="confirm-spinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-success" class="modal-success hidden">
+      <div class="success-icon">&#127881;</div>
+      <h3>You're in!</h3>
+      <p id="success-details"></p>
+      <button class="btn-primary" onclick="closeModalDirect()">Done</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}

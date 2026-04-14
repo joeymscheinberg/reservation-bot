@@ -1,0 +1,16 @@
+{
+  "venue": "MAMO Restaurant",
+  "date": "2026-04-24",
+  "time": "21:30",
+  "dry_run": true,
+  "platform": "resy",
+  "slug": "mamo-restaurant",
+  "party_size": 2,
+  "start_time": "19:00",
+  "end_time": "22:00",
+  "slot_type": "friday_dinner",
+  "pending_since": "2026-04-12T17:37:25.391058",
+  "status": "cancelled",
+  "weekend_id": "2026-04-25",
+  "cancelled_at": "2026-04-12T17:52:13.755397"
+}

@@ -1,0 +1,115 @@
+preferences:
+  party_size: 2
+  slots:
+    friday_dinner:
+      day: friday
+      start: "19:00"
+      end: "22:00"
+    saturday_brunch:
+      day: saturday
+      start: "11:00"
+      end: "13:00"
+    saturday_dinner:
+      day: saturday
+      start: "19:00"
+      end: "22:00"
+  booking_window_weeks: 4
+
+restaurants:
+
+  # ── RESY ────────────────────────────────────────────────────────────────────
+
+  - name: "Gramercy Tavern"
+    platform: resy
+    slug: gramercy-tavern
+    slots: [friday_dinner, saturday_dinner]
+
+  - name: "Union Square Cafe"
+    platform: resy
+    slug: union-square-cafe
+    slots: [friday_dinner, saturday_brunch, saturday_dinner]
+
+  - name: "Cosme"
+    platform: resy
+    slug: cosme
+    slots: [friday_dinner, saturday_dinner]
+
+  - name: "Tuome"
+    platform: resy
+    slug: tuome
+    slots: [friday_dinner, saturday_dinner]
+
+  - name: "Borgo"
+    platform: resy
+    slug: borgo
+    drop_time: "10:00"
+    slots: [friday_dinner, saturday_dinner]
+    notes: "21 days out at 10am"
+
+  - name: "Moono"
+    platform: resy
+    slug: moono
+    slots: [friday_dinner, saturday_dinner]
+
+  - name: "Rubirosa"
+    platform: resy
+    slug: rubirosa
+    drop_time: "09:00"
+    slots: [friday_dinner, saturday_dinner]
+    notes: "2 weeks out at 9am. Walk-ins also strong option."
+
+  - name: "MAMO"
+    platform: resy
+    slug: mamo-restaurant
+    slots: [friday_dinner, saturday_dinner]
+
+  - name: "Monkey Bar"
+    platform: resy
+    slug: monkey-bar-nyc
+    drop_time: "09:00"
+    slots: [friday_dinner, saturday_dinner]
+    notes: "21 days out at 9am"
+
+  # - name: "San Sabino"
+  #   platform: resy
+  #   slug: san-sabino  # NOT FOUND - may use different slug or not on Resy
+  #   slots: [friday_dinner, saturday_dinner]
+  #   notes: "Very hard to get. From the Don Angie team."
+
+  - name: "The Commerce Inn"
+    platform: resy
+    slug: the-commerce-inn
+    slots: [saturday_brunch, friday_dinner, saturday_dinner]
+
+  - name: "The Golden Swan"
+    platform: resy
+    slug: the-golden-swan
+    slots: [saturday_brunch, friday_dinner]
+
+  # - name: "Decoy"
+  #   platform: resy
+  #   slug: decoy  # NOT FOUND - may use different slug or not on Resy
+  #   slots: [friday_dinner, saturday_dinner]
+
+  - name: "La Tete dOr by Daniel"
+    platform: resy
+    slug: la-tete-dor
+    slots: [friday_dinner, saturday_dinner]
+
+  - name: "Hawksmoor NYC"
+    platform: opentable
+    slug: hawksmoor-nyc
+    slots: [friday_dinner, saturday_dinner]
+
+  # ── OPENTABLE ───────────────────────────────────────────────────────────────
+
+  - name: "Le Veau dOr"
+    platform: opentable
+    slug: le-veau-dor-new-york
+    slots: [friday_dinner, saturday_dinner]
+    notes: "Prix fixe only. Closed Sun-Mon. Books Fri/Sat dates looking ahead."
+
+  # ── SKIP / WALK-IN ONLY ─────────────────────────────────────────────────────
+
+  # Uluh — walk-in only on weekends per their website
+  # Una Pizza Napoletana — verify booking method before adding

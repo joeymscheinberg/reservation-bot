@@ -1,0 +1,15 @@
+{
+  "venue": "Moono",
+  "date": "2026-04-17",
+  "time": "19:30",
+  "dry_run": true,
+  "platform": "resy",
+  "slug": "moono",
+  "party_size": 2,
+  "start_time": "19:00",
+  "end_time": "22:00",
+  "slot_type": "friday_dinner",
+  "pending_since": "2026-04-12T17:37:25.395344",
+  "status": "optional",
+  "weekend_id": "2026-04-18"
+}

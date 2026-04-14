@@ -1,0 +1,16 @@
+{
+  "venue": "Union Square Cafe",
+  "date": "2026-04-17",
+  "time": "20:30",
+  "dry_run": true,
+  "platform": "resy",
+  "slug": "union-square-cafe",
+  "party_size": 2,
+  "start_time": "19:00",
+  "end_time": "22:00",
+  "slot_type": "friday_dinner",
+  "pending_since": "2026-04-12T17:37:25.389314",
+  "status": "cancelled",
+  "weekend_id": "2026-04-18",
+  "cancelled_at": "2026-04-12T18:03:30.079895"
+}

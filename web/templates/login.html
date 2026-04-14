@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Sign In — TableFinder{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+
+    <div class="login-header">
+      <h1>Find your table.</h1>
+      <p class="subhead">Sign in with your Resy account to search real-time availability.</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+      <span class="alert-icon">&#9888;</span> {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}" class="login-form">
+      <div class="field-group">
+        <label for="email">Resy email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        />
+      </div>
+
+      <div class="field-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-primary btn-full">
+        Sign in &rarr;
+      </button>
+    </form>
+
+    <p class="login-note">
+      Your credentials are used only to search Resy on your behalf.<br/>
+      Nothing is stored beyond your session.
+    </p>
+
+  </div>
+
+  <div class="login-aside">
+    <div class="aside-blob">
+      <h2>"Saturday night, Italian, Lower East Side — go."</h2>
+      <p>Just describe what you're in the mood for and we'll find you a table.</p>
+      <ul class="feature-list">
+        <li>&#10003; Real Resy availability, live</li>
+        <li>&#10003; Natural language search</li>
+        <li>&#10003; Sorted by rating</li>
+        <li>&#10003; Book in one click</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

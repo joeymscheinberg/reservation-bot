@@ -1,0 +1,7 @@
+requests==2.31.0
+pyyaml==6.0.1
+python-dotenv==1.0.0
+pyobjc-framework-Cocoa==10.3; sys_platform == "darwin"  # macOS notifications (local only)
+anthropic>=0.50.0  # Chat assistant
+flask>=3.0.0
+gunicorn>=21.2.0
